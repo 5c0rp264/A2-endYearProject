@@ -20,8 +20,8 @@ int8_t error = 0;
 short integratedError = 0;
 int8_t previousError = 0;
 
-#define Kp 25
-#define Ki 1.3
+#define Kp 20
+#define Ki 1.5
 int8_t queueForIntegrate[3] = {0,0,0};
 #define Kd 3
 
@@ -57,52 +57,56 @@ void setup(){
 // the loop() method runs over and over again,
 // as long as the Arduino has power
 void loop(){
-  getCurrentSensorValues();
+  getCurrentSensorValues(); //explicit
   int numOfSensorActivated = 0;
-  for ( int i = 0; i<4; i++){
+  for ( int i = 0; i<4; i++){ //count number of sensor activated
     if (LFSensorValues[i] == 1) {
       numOfSensorActivated++;
     }
   }
-  if ( numOfSensorActivated < 2){
-    getErrorCorrespondingToSensorValues();
-    manageQueueWithNewError();
+  if ( numOfSensorActivated < 2){ //if is not an intersection -> follow line
+    getErrorCorrespondingToSensorValues(); //explicit
+    manageQueueWithNewError(); //integrate with new error
     int PIDValue = (Kp*error) + (Ki*integratedError) + (Kd*(error-previousError));
     /*if (PIDValue > 100 ){
       PIDValue = 100;
-    }
-    Serial.print("PID:");
+    }*/
+    /*Serial.print("PID:");
     Serial.println(PIDValue);
     Serial.print("P:");
-    Serial.println(error);
+    Serial.println(error*Kp);
     Serial.print("I:");
-    Serial.println(integratedError);
+    Serial.println(integratedError*Ki);
     Serial.print("D:");
-    Serial.println((error-previousError));*/
-    Motor.speed(MOTOR1,60+PIDValue);
-    Motor.speed(MOTOR2,60-PIDValue);
+    Serial.println((error-previousError*Kd));*/
+    Motor.speed(MOTOR1,60+PIDValue);//assign adequate value with new PID 
+    Motor.speed(MOTOR2,60-PIDValue);//assign opposit value for oppsit motor
   }else{
-    if (((sizeof(pathToTake)/ sizeof(pathToTake[0]))+1)<= intersectionCounter){
+    if (((sizeof(pathToTake)/ sizeof(pathToTake[0])))< intersectionCounter){//if we have done all order -> stop
       Motor.speed(MOTOR1,-100);
       Motor.speed(MOTOR2,-100);
       delay(40);
       Motor.stop(MOTOR1);
       Motor.stop(MOTOR2);
       exit(0);
-    } else if (pathToTake[intersectionCounter] == 5){
+    } else if (pathToTake[intersectionCounter] == 5){ //order go forward
       Motor.speed(MOTOR1,70);
       Motor.speed(MOTOR2,70);
       delay(175);
-    } else if (pathToTake[intersectionCounter] == 1){
-      Motor.speed(MOTOR1,-80);
+    } else if (pathToTake[intersectionCounter] == 1){//order turn right
+      Motor.speed(MOTOR1,-55);
       Motor.speed(MOTOR2,100);
       delay(150);
       while(digitalRead(lineFollowSensorD) == 0){}
-    }else if (pathToTake[intersectionCounter] == 3){
+    }else if (pathToTake[intersectionCounter] == 3){//order turn left
       Motor.speed(MOTOR1,100);
-      Motor.speed(MOTOR2,-80);
+      Motor.speed(MOTOR2,-55);
       delay(150);
       while(digitalRead(lineFollowSensorG) == 0){}
+    }else if (pathToTake[intersectionCounter] == 2){//order turn back
+      Motor.speed(MOTOR1,90);
+      Motor.speed(MOTOR2,-90);
+      delay(1300);
     }
     intersectionCounter++;
 
@@ -115,7 +119,7 @@ void loop(){
 
 
 
-void blink() {
+void blink() { //count each hole to get speed of the robot
   counter++;
   if (counter >= 20 ) {
     timeForATurn = millis()-oldMillis;
@@ -126,7 +130,7 @@ void blink() {
 }
 
 
-void getCurrentSensorValues() {
+void getCurrentSensorValues() { //explicit
   LFSensorValues[0] = digitalRead(lineFollowSensorGG);
   LFSensorValues[1] = digitalRead(lineFollowSensorG);
   LFSensorValues[2] = digitalRead(lineFollowSensorD);
@@ -135,24 +139,24 @@ void getCurrentSensorValues() {
 
 
 
-void getErrorCorrespondingToSensorValues() {
+void getErrorCorrespondingToSensorValues() { //explicit
   if((LFSensorValues[0]== 0 )&&(LFSensorValues[1]== 0 )&&(LFSensorValues[2]== 0 )&&(LFSensorValues[3]== 1 )) error = 3;
 
-  else if((LFSensorValues[0]== 0 )&&(LFSensorValues[1]== 0 )&&(LFSensorValues[2]== 1 )&&(LFSensorValues[3]== 1 )) error = 2;
+  //else if((LFSensorValues[0]== 0 )&&(LFSensorValues[1]== 0 )&&(LFSensorValues[2]== 1 )&&(LFSensorValues[3]== 1 )) error = 2;
 
-  else if((LFSensorValues[0]== 0 )&&(LFSensorValues[1]== 0 )&&(LFSensorValues[2]== 1 )&&(LFSensorValues[3]== 0 )) error = 1;
+  else if((LFSensorValues[0]== 0 )&&(LFSensorValues[1]== 0 )&&(LFSensorValues[2]== 1 )&&(LFSensorValues[3]== 0 )) error = 2;
   
-  else if((LFSensorValues[0]== 0 )&&(LFSensorValues[1]== 1 )&&(LFSensorValues[2]== 1 )&&(LFSensorValues[3]== 0 )) error = 0;
+  else if((LFSensorValues[0]== 0 )&&(LFSensorValues[1]== 0 )&&(LFSensorValues[2]== 0 )&&(LFSensorValues[3]== 0 )) error = 0;
 
-  else if((LFSensorValues[0]== 0 )&&(LFSensorValues[1]== 1 )&&(LFSensorValues[2]== 0 )&&(LFSensorValues[3]== 0 )) error = -1;
+  else if((LFSensorValues[0]== 0 )&&(LFSensorValues[1]== 1 )&&(LFSensorValues[2]== 0 )&&(LFSensorValues[3]== 0 )) error = -2;
 
-  else if((LFSensorValues[0]== 1 )&&(LFSensorValues[1]== 1 )&&(LFSensorValues[2]== 0 )&&(LFSensorValues[3]== 0 )) error = -2;
+  //else if((LFSensorValues[0]== 1 )&&(LFSensorValues[1]== 1 )&&(LFSensorValues[2]== 0 )&&(LFSensorValues[3]== 0 )) error = -2;
 
   else if((LFSensorValues[0]== 1 )&&(LFSensorValues[1]== 0 )&&(LFSensorValues[2]== 0 )&&(LFSensorValues[3]== 0 )) error = -3;
 }
 
 
-void manageQueueWithNewError(){ //this function is currently not working...
+void manageQueueWithNewError(){ //manageQueue for later on integrate the last error values
   integratedError = 0;
   for (int i=0; i<3; i++) {
     integratedError += queueForIntegrate[i];

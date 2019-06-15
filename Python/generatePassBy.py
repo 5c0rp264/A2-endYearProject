@@ -90,14 +90,26 @@ if __name__ == "__main__": ## good habit
     print ("======= Dijkstra =======")
     print (edges)
     source = str(input("Please enter where you want to start:  "))
+    passBy = str(input("Please enter where you want to passBy:  "))
     destination = str(input("Please enter where you want to finish:  "))
-    dataOutput = str(dijkstra(edges, destination, source))
+    dataOutput = str(dijkstra(edges, passBy, source))
+    dataOutput2 = str(dijkstra(edges, destination, passBy))
     dataOutput = re.sub(r'\(',r'', dataOutput) ##treating dataOutput as this is a pth and is is outpouted weirdly
     dataOutput = re.sub(r'\)',r'', dataOutput)
     dataOutput = dataOutput.replace("'", "")
+    dataOutput2 = re.sub(r'\(',r'', dataOutput2) ##treating dataOutput as this is a pth and is is outpouted weirdly
+    dataOutput2 = re.sub(r'\)',r'', dataOutput2)
+    dataOutput2 = dataOutput2.replace("'", "")
     nodeToGo = dataOutput.split(",")
+    nodeToGo2 = dataOutput2.split(",")
     del nodeToGo[0]
     del nodeToGo[len(nodeToGo)-1]
+    del nodeToGo2[0]
+    del nodeToGo2[0]
+    del nodeToGo2[len(nodeToGo2)-1]
+    for nodeToAdd in nodeToGo2 :
+        nodeToGo.append(nodeToAdd)
+    print(nodeToGo)
     order = "{"
     orderNum = 0
     for node in list(range(len(nodeToGo))):
@@ -111,7 +123,10 @@ if __name__ == "__main__": ## good habit
 ##            print("current : " + str(current))
 ##            print("nextOne : " + str(nextOne))
            ## print(previous)
-            if (previous[0] == current[0] and current[0]==nextOne[0]): ## all if here are to tell where to go checking every position
+            if ((int(nodeToGo[node])==int(passBy)) and (int(nodeToGo[node-1])==int(nodeToGo[node+1]))):
+                print ("reverse everything !!!!")
+                order+="2"
+            elif (previous[0] == current[0] and current[0]==nextOne[0]): ## all if here are to tell where to go checking every position
                 print ("go forward")
                 order+="5"
             elif (previous[1]==current[1] and current[1]==nextOne[1]):
